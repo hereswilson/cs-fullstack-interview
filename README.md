@@ -2,19 +2,6 @@
 
 This project uses a virtual environment created with `uv` and installs Flask via `uv pip`.
 
-## Quickstart
-
-1. **Activate the virtual environment:**
-   ```zsh
-   source .venv/bin/activate
-   ```
-2. **Run the app:**
-   ```zsh
-   python app.py
-   ```
-
-The app will be available at http://127.0.0.1:5000/
-
 ## Features
 - **Client Import Logic:**
    - The `import_client_handler` method in `helper.py` processes client imports, handling creation and updates based on integration data.
