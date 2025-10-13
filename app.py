@@ -18,9 +18,11 @@ class Client(db.Model):
     firm_id = db.Column(db.Integer, nullable=False)
     first_name = db.Column(db.String(128), nullable=False)
     last_name = db.Column(db.String(128), nullable=False)
+    birth_date = db.Column(db.String(128), nullable=True)
     email = db.Column(db.String(128), unique=True)
     cell_phone = db.Column(db.String(32))
     integration_id = db.Column(db.String(128), nullable=False)
+    ssn = db.Column(db.String(128), nullable=True)
 
 
 @app.route("/")

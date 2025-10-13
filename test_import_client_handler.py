@@ -1,7 +1,6 @@
 import unittest
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from app import db, Client
 from helper import ImportCaseHelper, ClientRepository
 
 
@@ -16,6 +15,79 @@ class Firm:
 
 
 class ImportClientHandlerTestCase(unittest.TestCase):
+    def setUp(self):
+        import app
+
+        app.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        self.app = app.app
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        app.db.drop_all()
+        app.db.create_all()
+        self.session = app.db.session
+        self.firm = Firm(id=1)
+
+    def tearDown(self):
+        import app
+
+        app.db.session.remove()
+        app.db.drop_all()
+        self.app_context.pop()
+
+    def test_update_preexisting_client(self):
+        from app import Client
+
+        # Create a client first
+        row = {}
+        field_names = {
+            "first_name": "Alice",
+            "last_name": "Brown",
+            "email": "alice.brown@example.com",
+            "phone_numbers": ["5559876543"],
+            "type": "Person",
+        }
+        ImportCaseHelper.import_client_handler(
+            session=self.session,
+            firm=self.firm,
+            row=row,
+            field_names=field_names,
+            integration_type=None,
+            integration_id="int-789",
+            matter_id=None,
+            integration_response_object=None,
+            create_new_client=True,
+            validation=False,
+        )
+        # Update the client using import_client_handler
+        updated_row = {}
+        updated_field_names = {
+            "first_name": "Alicia",
+            "last_name": "Brown",
+            "email": "alice.brown@example.com",
+            "phone_numbers": ["5559876543"],
+            "type": "Person",
+        }
+        ImportCaseHelper.import_client_handler(
+            session=self.session,
+            firm=self.firm,
+            row=updated_row,
+            field_names=updated_field_names,
+            integration_type=None,
+            integration_id="int-789",
+            matter_id=None,
+            integration_response_object=None,
+            create_new_client=True,
+            validation=False,
+        )
+        client = ClientRepository.find_by_integration_id(
+            self.session, self.firm.id, "int-789"
+        )
+        self.assertIsNotNone(client)
+        self.assertEqual(client.first_name, "Alicia")
+        self.assertEqual(client.last_name, "Brown")
+        self.assertEqual(client.email, "alice.brown@example.com")
+
     def setUp(self):
         from app import app, db
 
