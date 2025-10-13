@@ -40,6 +40,12 @@ This project uses a virtual environment created with `uv` and installs Flask via
 - `test_import_client_handler.py`: Unit tests for client import logic
 - `.venv/`: Virtual environment
 
----
+# TASK
 
-For development, keep your virtual environment activated.
+- Refactor the ImportCaseHelper.import_client_handler method to be more readable and maintainable. Fix any code smells or bad practices that you find objectionable or poor practice. However, the functionality of the method should remain the same and the unit tests should continue to pass.
+  
+- ** Rules **
+
+1. The unit tests in ImportClientHandlerTestCase should remain the same
+2. Unit tests should continue to pass successfully
+3. ...
