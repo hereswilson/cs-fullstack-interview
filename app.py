@@ -1,8 +1,4 @@
-import click
-from flask.cli import with_appcontext
-
-
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from helper import ImportCaseHelper
 from helper import IntegrationHelper
@@ -93,11 +89,3 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
     app.run(debug=True)
-
-
-@app.cli.command("init-db")
-@with_appcontext
-def init_db_command():
-    """Initialize the database (create tables)."""
-    db.create_all()
-    click.echo("Initialized the database.")
