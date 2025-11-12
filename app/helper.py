@@ -1,11 +1,11 @@
 from sqlalchemy import exc
+from app.models import Client, User
 
 
 # Placeholder classes, functions, and variables
 class ClientRepository:
     @staticmethod
     def find_by_integration_id(session, firm_id, integration_id):
-        from app import Client
 
         return (
             session.query(Client)
@@ -15,7 +15,6 @@ class ClientRepository:
 
     @staticmethod
     def find_by_email_address(session, email_address, firm_id):
-        from app import Client
 
         return (
             session.query(Client)
@@ -25,7 +24,6 @@ class ClientRepository:
 
     @staticmethod
     def find_by_phone_number_firm(session, phone_number, firm_id):
-        from app import Client
 
         return (
             session.query(Client)
@@ -250,7 +248,6 @@ class ImportCaseHelper:
             email_address = client_email_address if not user else None
 
             try:
-                from app import Client
 
                 client_instance = Client(
                     firm_id=firm.id,

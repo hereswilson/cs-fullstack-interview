@@ -1,7 +1,9 @@
 import unittest
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from helper import ImportCaseHelper, ClientRepository
+from app.helper import ImportCaseHelper, ClientRepository
+from app import app, db
+
 
 
 class Firm:
@@ -16,27 +18,23 @@ class Firm:
 
 class ImportClientHandlerTestCase(unittest.TestCase):
     def setUp(self):
-        import app
 
-        app.app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        app.app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        self.app = app.app
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+        self.app = app
         self.app_context = self.app.app_context()
         self.app_context.push()
-        app.db.drop_all()
-        app.db.create_all()
-        self.session = app.db.session
+        db.drop_all()
+        db.create_all()
+        self.session = db.session
         self.firm = Firm(id=1)
 
-    def tearDown(self):
-        import app
-
-        app.db.session.remove()
-        app.db.drop_all()
+    def tearDown(self):     
+        db.session.remove()
+        db.drop_all()
         self.app_context.pop()
 
     def test_update_preexisting_client(self):
-        from app import Client
 
         # Create a client first
         row = {}
@@ -89,7 +87,6 @@ class ImportClientHandlerTestCase(unittest.TestCase):
         self.assertEqual(client.email, "alice.brown@example.com")
 
     def setUp(self):
-        from app import app, db
 
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
         app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -101,8 +98,6 @@ class ImportClientHandlerTestCase(unittest.TestCase):
         self.firm = Firm(id=1)
 
     def tearDown(self):
-        from app import db
-
         db.session.remove()
         db.drop_all()
         self.app_context.pop()
