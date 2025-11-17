@@ -1,4 +1,7 @@
 from app import db 
+import sqlalchemy as sa
+import sqlalchemy.orm as so
+from typing import Optional
 
 
 class Firm:
@@ -12,18 +15,18 @@ class Firm:
 
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    email = db.Column(db.String(128), unique=True, nullable=False)
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True, nullable=False)
+    email: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True, nullable=False)
 
 
 class Client(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    firm_id = db.Column(db.Integer, nullable=False)
-    first_name = db.Column(db.String(128), nullable=False)
-    last_name = db.Column(db.String(128), nullable=False)
-    birth_date = db.Column(db.String(128), nullable=True)
-    email = db.Column(db.String(128), unique=True)
-    cell_phone = db.Column(db.String(32))
-    integration_id = db.Column(db.String(128), nullable=False)
-    ssn = db.Column(db.String(128), nullable=True)
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    firm_id: so.Mapped[int] = so.mapped_column(nullable=False)
+    first_name: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
+    last_name: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
+    birth_date: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), unique=True, nullable=True)
+    cell_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
+    integration_id: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
+    ssn: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)

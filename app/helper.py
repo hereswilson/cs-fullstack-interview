@@ -1,47 +1,12 @@
-from sqlalchemy import exc
-from app.models import Client, User
+from app.models import Client, User, Firm
+from app.repositories import ClientRepository, UserRepository
 
-
-# Placeholder classes, functions, and variables
-class ClientRepository:
-    @staticmethod
-    def find_by_integration_id(session, firm_id, integration_id):
-
-        return (
-            session.query(Client)
-            .filter_by(firm_id=firm_id, integration_id=integration_id)
-            .first()
-        )
-
-    @staticmethod
-    def find_by_email_address(session, email_address, firm_id):
-
-        return (
-            session.query(Client)
-            .filter_by(email=email_address, firm_id=firm_id)
-            .first()
-        )
-
-    @staticmethod
-    def find_by_phone_number_firm(session, phone_number, firm_id):
-
-        return (
-            session.query(Client)
-            .filter_by(cell_phone=phone_number, firm_id=firm_id)
-            .first()
-        )
-
-    @staticmethod
-    def save(session, client_instance):
-        session.add(client_instance)
-        session.commit()
-
-
-class UserRepository:
-    @staticmethod
-    def find_by_email_address(session, email_address):
-        pass
-
+CLIENT_MISSING_NAME = "Client missing name."
+CELL_PHONE_INVALID = "Cell phone invalid: {}"
+CLIENT_NOT_FOUND_STOP_ZAP = "Client not found, stopping import."
+USER_ALREADY_EXISTS = "User already exists: {}, {}"
+CLIENT_UPDATED = "Client updated."
+CLIENT_CONTACT_INFO_FIELD_NAMES = ["first_name", "last_name", "email", "cell_phone"]
 
 class IntegrationHelper:
     CSV_IMPORT = "CSV_IMPORT"
@@ -59,19 +24,6 @@ def identify_orphaned_user_by_phone_number(
     session, phone_number, first_name=None, last_name=None, client_email_address=None
 ):
     pass
-
-
-def encrypt_ssn(ssn):
-    return ssn
-
-
-CLIENT_MISSING_NAME = "Client missing name."
-CELL_PHONE_INVALID = "Cell phone invalid: {}"
-CLIENT_NOT_FOUND_STOP_ZAP = "Client not found, stopping import."
-USER_ALREADY_EXISTS = "User already exists: {}, {}"
-CLIENT_UPDATED = "Client updated."
-CLIENT_CONTACT_INFO_FIELD_NAMES = ["first_name", "last_name", "email", "cell_phone"]
-
 
 def filter_cell_phone_numbers(phone_numbers, firm):
     valid_numbers = []

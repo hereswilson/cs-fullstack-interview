@@ -2,7 +2,13 @@ import unittest
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from app.helper import ImportCaseHelper, ClientRepository
-from app import app, db
+from app import create_app, db
+from config import Config
+
+class TestConfig(Config):
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 
@@ -18,10 +24,7 @@ class Firm:
 
 class ImportClientHandlerTestCase(unittest.TestCase):
     def setUp(self):
-
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        self.app = app
+        self.app = create_app(TestConfig)
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.drop_all()
@@ -88,9 +91,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
 
     def setUp(self):
 
-        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        self.app = app
+        self.app = create_app(TestConfig)
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
