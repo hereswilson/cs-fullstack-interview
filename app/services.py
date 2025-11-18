@@ -16,7 +16,7 @@ class ClientService:
     
         # Get first phone from array
         phone_numbers = field_names.get("phone_numbers", [])
-        cell_phone = phone_numbers[0] if phone_numbers else None
+        cell_phone = phone_numbers[0] if phone_numbers and len(phone_numbers) > 0 else None
         # Look up existing
         client = self.client_repo.find_by_integration_id(firm.id, integration_id)
         

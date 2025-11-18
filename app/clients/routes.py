@@ -21,20 +21,17 @@ def patch_client():
     try:
         data = request.get_json()
 
-        firm = Firm(data.get("firm_id", 1))
+        
         schema = ClientImportSchema()
-        errors = schema.validate(data)
-        if errors:
-            formatted_errors = [{"field": k, "message": str(v)} for k, v in errors.items()]
-            return jsonify({"status": "error", "errors": formatted_errors}), 400
+        validated_data = schema.load(data)
 
-        firm = Firm(data.get("firm_id", 1))
+        firm = Firm(validated_data.get("firm_id", 1))
         service = ClientService()
 
         # 3. Call the actual handler
         result = service.import_client_handler(
             firm=firm,
-            field_names=data["field_names"]
+            field_names=validated_data["field_names"]
         )
 
         # Return success with client data
@@ -44,6 +41,14 @@ def patch_client():
             "created": result["created"],
             "client": client_schema.dump(result["client"])
         }), 200
+
+    except ValidationError as err:
+        formatted_errors = []
+        for field, messages in err.messages.items():
+            for msg in messages:
+                formatted_errors.append({"field": field, "message": msg})
+        
+        return jsonify({"status": "error", "errors": formatted_errors}), 400
     
     except Exception as e:
 
