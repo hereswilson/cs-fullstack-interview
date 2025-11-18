@@ -7,14 +7,6 @@ class ClientSchema(ma.SQLAlchemyAutoSchema):
         model = Client
         load_instance = True
 
-class ClientImportSchema(ma.Schema):
-    firm_id = fields.Integer(required=True)
-    integration_type = fields.String(
-        required=True,
-        validate=validate.OneOf(["CSV_IMPORT", "THIRD_PARTY", "MYCASE"])
-    )
-    field_names = fields.Nested(FieldNamesSchema, required=True)
-
 class FieldNamesSchema(ma.Schema):
     first_name = fields.String(
         required=True,
@@ -54,6 +46,14 @@ class FieldNamesSchema(ma.Schema):
             raise ValidationError("phone_numbers must be a list")
         if value and any(not isinstance(num, str) for num in value):
             raise ValidationError("All phone numbers must be strings")
+
+class ClientImportSchema(ma.Schema):
+    firm_id = fields.Integer(required=True)
+    integration_type = fields.String(
+        required=True,
+        validate=validate.OneOf(["CSV_IMPORT", "THIRD_PARTY", "MYCASE"])
+    )
+    field_names = fields.Nested(FieldNamesSchema, required=True)
 
 
 
