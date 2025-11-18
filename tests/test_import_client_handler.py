@@ -49,17 +49,11 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "email": "alice.brown@example.com",
             "phone_numbers": ["5559876543"],
             "type": "Person",
+            "integration_id": "int-789",
         }
         self.service.import_client_handler(
             firm=self.firm,
-            row=row,
-            field_names=field_names,
-            integration_type=None,
-            integration_id="int-789",
-            matter_id=None,
-            integration_response_object=None,
-            create_new_client=True,
-            validation=False,
+            field_names=field_names
         )
         # Update the client using import_client_handler
         updated_row = {}
@@ -69,17 +63,11 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "email": "alice.brown@example.com",
             "phone_numbers": ["5559876543"],
             "type": "Person",
+            "integration_id": "int-789",
         }
-        self.helper.import_client_handler(
+        self.service.import_client_handler(
             firm=self.firm,
-            row=updated_row,
-            field_names=updated_field_names,
-            integration_type=None,
-            integration_id="int-789",
-            matter_id=None,
-            integration_response_object=None,
-            create_new_client=True,
-            validation=False,
+            field_names=updated_field_names
         )
         client = self.client_repo.find_by_integration_id(
             self.firm.id, "int-789"
@@ -98,17 +86,11 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "email": "john.doe@example.com",
             "phone_numbers": ["1234567890"],
             "type": "Person",
+            "integration_id": "int-123",
         }
-        result = self.helper.import_client_handler(
+        result = self.service.import_client_handler(
             firm=self.firm,
-            row=row,
-            field_names=field_names,
-            integration_type=None,
-            integration_id="int-123",
-            matter_id=None,
-            integration_response_object=None,
-            create_new_client=True,
-            validation=False,
+            field_names=field_names
         )
         client = self.client_repo.find_by_integration_id(
             self.firm.id, "int-123"
