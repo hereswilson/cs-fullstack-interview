@@ -1,8 +1,9 @@
 import unittest
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from app.helper import ImportCaseHelper, ClientRepository
 from app import create_app, db
+from app.services import ClientService
+from app.repositories import ClientRepository
 from config import Config
 
 class TestConfig(Config):
@@ -31,7 +32,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
         db.create_all()
         self.session = db.session
         self.firm = Firm(id=1)
-        self.helper = ImportCaseHelper(self.session)
+        self.service = ClientService(self.session)
         self.client_repo = ClientRepository(self.session)
 
     def tearDown(self):     
@@ -42,7 +43,6 @@ class ImportClientHandlerTestCase(unittest.TestCase):
     def test_update_preexisting_client(self):
 
         # Create a client first
-        row = {}
         field_names = {
             "first_name": "Alice",
             "last_name": "Brown",
@@ -50,7 +50,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "phone_numbers": ["5559876543"],
             "type": "Person",
         }
-        self.helper.import_client_handler(
+        self.service.import_client_handler(
             firm=self.firm,
             row=row,
             field_names=field_names,
