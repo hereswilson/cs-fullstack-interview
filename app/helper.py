@@ -8,6 +8,7 @@ USER_ALREADY_EXISTS = "User already exists: {}, {}"
 CLIENT_UPDATED = "Client updated."
 CLIENT_CONTACT_INFO_FIELD_NAMES = ["first_name", "last_name", "email", "cell_phone"]
 
+
 class IntegrationHelper:
     CSV_IMPORT = "CSV_IMPORT"
     THIRD_PARTY = "THIRD_PARTY"
@@ -20,22 +21,7 @@ def log_integration_response(
     pass
 
 
-def identify_orphaned_user_by_phone_number(
-    session, phone_number, first_name=None, last_name=None, client_email_address=None
-):
-    pass
-
-def filter_cell_phone_numbers(phone_numbers, firm):
-    valid_numbers = []
-    for number in phone_numbers:
-        valid_number = ImportCaseHelper.parse_cell_phone_number(number, firm)
-        if valid_number:
-            valid_numbers.append(valid_number)
-    return valid_numbers
-
-
 def _update_client(session, client_instance, client_data_to_update):
-    # Update the fields of the client record
     updated = False
     for field, value in client_data_to_update.items():
         if hasattr(client_instance, field) and value is not None:
@@ -47,15 +33,25 @@ def _update_client(session, client_instance, client_data_to_update):
 
 
 class ImportCaseHelper:
+    def __init__(self, session):
+        self.session = session
+        self.client_repo = ClientRepository(session)
+        self.user_repo = UserRepository(session)
 
-    @staticmethod
-    def parse_cell_phone_number(number, firm):
+    def parse_cell_phone_number(self, number, firm):
         # Implement parsing logic here
         return True
 
-    @staticmethod
+    def filter_cell_phone_numbers(self, phone_numbers, firm):
+        valid_numbers = []
+        for number in phone_numbers:
+            valid_number = self.parse_cell_phone_number(number, firm)
+            if valid_number:
+                valid_numbers.append(valid_number)
+        return valid_numbers
+
     def import_client_handler(
-        session,
+        self,
         firm,
         row,
         field_names,
@@ -69,7 +65,6 @@ class ImportCaseHelper:
         # Guard Vars
         client_instance = None
         client_updated = False
-        orphaned_user = None
         should_update_client = firm.integration_settings.get(
             "update_client_missing_data"
         ) or firm.integration_settings.get("sync_client_contact_info")
@@ -93,8 +88,9 @@ class ImportCaseHelper:
         if phone_numbers is None:
             phone_numbers = []
 
-        filtered_cell_phone_numbers = filter_cell_phone_numbers(phone_numbers, firm)
-
+        filtered_cell_phone_numbers = self.filter_cell_phone_numbers(
+            phone_numbers, firm
+        )
         primary_number = (
             filtered_cell_phone_numbers[0] if filtered_cell_phone_numbers else None
         )
@@ -121,39 +117,14 @@ class ImportCaseHelper:
         )
         results["company_name"] = company_name
 
-        # Check to see if client can be found in system already
-        # Integration ID is easiest
+        # For CSV imports, only lookup by integration_id
         if integration_id:
-            client_instance = ClientRepository.find_by_integration_id(
-                session, firm.id, integration_id
+            client_instance = self.client_repo.find_by_integration_id(
+                firm.id, integration_id
             )
-        # If the client is corporate, they may be found by an email address
-        if not client_instance and firm.is_corporate and client_email_address:
-            client_instance = ClientRepository.find_by_email_address(
-                session, client_email_address, firm.id
-            )
-        # If still no client, try to use a cell phone number
-        if not client_instance and filtered_cell_phone_numbers:
-            for phone_number in filtered_cell_phone_numbers:
-                client_instance = ClientRepository.find_by_phone_number_firm(
-                    session, phone_number, firm.id
-                )
-                # When found by cell number, record that number in the row and move on
-                if client_instance:
-                    row["cell_phone"] = phone_number
-                    break
 
-                orphaned_user = identify_orphaned_user_by_phone_number(
-                    session,
-                    phone_number,
-                    first_name=first_name,
-                    last_name=last_name,
-                    client_email_address=client_email_address,
-                )
-                if orphaned_user:
-                    row["cell_phone"] = phone_number
-                    break
-        if not client_instance and not orphaned_user:
+        # Validation for new clients
+        if not client_instance:
             if integration_type in (
                 IntegrationHelper.CSV_IMPORT,
                 IntegrationHelper.THIRD_PARTY,
@@ -178,6 +149,7 @@ class ImportCaseHelper:
                     row["error_message"] = CLIENT_MISSING_NAME
                     results["row"].update(row)
                     return results
+
             if not firm.is_corporate and not filtered_cell_phone_numbers:
                 row["error_fields"] = ["client_cell_phone"]
                 row["error_message"] = CELL_PHONE_INVALID.format(
@@ -190,17 +162,13 @@ class ImportCaseHelper:
                 row["error_message"] = CLIENT_NOT_FOUND_STOP_ZAP
                 results["row"].update(row)
                 return results
+
+        # Create new client
         if not client_instance and create_new_client:
-            if orphaned_user:
-                user = orphaned_user
-            else:
-                user = UserRepository.find_by_email_address(
-                    session, client_email_address
-                )
+            user = self.user_repo.find_by_email_address(client_email_address)
             email_address = client_email_address if not user else None
 
             try:
-
                 client_instance = Client(
                     firm_id=firm.id,
                     first_name=first_name,
@@ -210,10 +178,11 @@ class ImportCaseHelper:
                     cell_phone=primary_number,
                 )
                 if not validation:
-                    ClientRepository.save(session, client_instance)
+                    self.client_repo.save(client_instance)
+                    self.session.commit()
                 results["created_client"] = True
             except Exception as err:
-                session.rollback()
+                self.session.rollback()
                 expected_error = any(
                     [
                         "uq_sub_users_type_firm_id_user_id" in str(err),
@@ -229,9 +198,10 @@ class ImportCaseHelper:
                     row["error_message"] = str(err)
 
                 print(
-                    f"{ImportCaseHelper.__class__.__name__}.import_client_handler(): "
-                    f"{err}"
+                    f"{self.__class__.__name__}.import_client_handler(): {err}"
                 )
+
+        # Update existing client
         elif should_update_client:
             client_data_to_update = {}
 
@@ -241,8 +211,7 @@ class ImportCaseHelper:
                     for k, v in field_names.items()
                     if k in CLIENT_CONTACT_INFO_FIELD_NAMES
                 }
-                # There is a chance that an integration would pass us a null value for cell phone number.
-                # We do not ever want to null out a client cell phone number.
+                # Don't null out cell phone number
                 if primary_number:
                     client_data_to_update["cell_phone"] = primary_number
 
@@ -265,14 +234,13 @@ class ImportCaseHelper:
                 if not client_instance.integration_id and field_names.get(
                     "integration_id"
                 ):
-                    # Update integration id if missing on client record
                     client_data_to_update["integration_id"] = field_names.get(
                         "integration_id"
                     )
 
             if client_data_to_update:
                 client_updated = _update_client(
-                    session, client_instance, client_data_to_update
+                    self.session, client_instance, client_data_to_update
                 )
 
             if (
@@ -282,7 +250,8 @@ class ImportCaseHelper:
             ):
                 row["success_msg"] = CLIENT_UPDATED
                 if not validation:
-                    ClientRepository.save(session, client_instance)
+                    self.client_repo.save(client_instance)
+                    self.session.commit()
 
         results["row"].update(row)
         results["client"] = client_instance

@@ -19,22 +19,36 @@ def get_clients():
 
 @bp.route("", methods=["PATCH"])
 def patch_client():
+    try:
+        data = request.get_json()
 
-    data = request.get_json()
+        firm = Firm(data.get("firm_id", 1))
+         # Validate payload structure and content
+        is_valid, errors = validate_patch_payload(data)
+        if not is_valid:
+            return jsonify({"status": "error", "errors": errors}), 400
 
-    firm = Firm(data.get("firm_id", 1))
-    result = ImportCaseHelper.import_client_handler(
-        session=db.session,
-        firm=firm,
-        row={},
-        field_names=data,
-        integration_type=IntegrationHelper.CSV_IMPORT,
-        integration_id=data.get("integration_id", None),
-        matter_id="123456",
-        integration_response_object=None,
-        create_new_client=True,
-        validation=False,
-    )
-    if error_message := result["row"].get("error_message", None):
-        return {"status": "error", "errors": error_message}
-    return {"status": "success", "result": result["row"].get("success_msg")}
+        # Simplified upsert for CSV_IMPORT
+        result = upsert_client_simple(
+            firm_id=data["firm_id"],
+            field_names=data["field_names"]
+        )
+
+        # Return success with client data
+        return jsonify({
+            "status": "success",
+            "message": result["message"],
+            "created": result["created"],
+            "client": client_schema.dump(result["client"])
+        }), 200
+    
+    except Exception as e:
+
+        db.session.rollback()
+        return jsonify({
+            "status": "error",
+            "errors": [{
+                "field": "general",
+                "message": "An unexpected error occurred. Please try again."
+            }]
+        }), 500

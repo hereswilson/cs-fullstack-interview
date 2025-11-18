@@ -31,6 +31,8 @@ class ImportClientHandlerTestCase(unittest.TestCase):
         db.create_all()
         self.session = db.session
         self.firm = Firm(id=1)
+        self.helper = ImportCaseHelper(self.session)
+        self.client_repo = ClientRepository(self.session)
 
     def tearDown(self):     
         db.session.remove()
@@ -48,8 +50,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "phone_numbers": ["5559876543"],
             "type": "Person",
         }
-        ImportCaseHelper.import_client_handler(
-            session=self.session,
+        self.helper.import_client_handler(
             firm=self.firm,
             row=row,
             field_names=field_names,
@@ -69,8 +70,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "phone_numbers": ["5559876543"],
             "type": "Person",
         }
-        ImportCaseHelper.import_client_handler(
-            session=self.session,
+        self.helper.import_client_handler(
             firm=self.firm,
             row=updated_row,
             field_names=updated_field_names,
@@ -81,27 +81,14 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             create_new_client=True,
             validation=False,
         )
-        client = ClientRepository.find_by_integration_id(
-            self.session, self.firm.id, "int-789"
+        client = self.client_repo.find_by_integration_id(
+            self.firm.id, "int-789"
         )
         self.assertIsNotNone(client)
         self.assertEqual(client.first_name, "Alicia")
         self.assertEqual(client.last_name, "Brown")
         self.assertEqual(client.email, "alice.brown@example.com")
 
-    def setUp(self):
-
-        self.app = create_app(TestConfig)
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-        self.session = db.session
-        self.firm = Firm(id=1)
-
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_import_client_handler_creates_client(self):
         row = {}
@@ -112,8 +99,7 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             "phone_numbers": ["1234567890"],
             "type": "Person",
         }
-        result = ImportCaseHelper.import_client_handler(
-            session=self.session,
+        result = self.helper.import_client_handler(
             firm=self.firm,
             row=row,
             field_names=field_names,
@@ -124,8 +110,8 @@ class ImportClientHandlerTestCase(unittest.TestCase):
             create_new_client=True,
             validation=False,
         )
-        client = ClientRepository.find_by_integration_id(
-            self.session, self.firm.id, "int-123"
+        client = self.client_repo.find_by_integration_id(
+            self.firm.id, "int-123"
         )
         self.assertIsNotNone(client)
         self.assertEqual(client.first_name, "John")

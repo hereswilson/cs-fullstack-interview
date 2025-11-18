@@ -26,7 +26,12 @@ class Client(db.Model):
     first_name: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
     last_name: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
     birth_date: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
-    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), unique=True, nullable=True)
+    email: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
     cell_phone: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32), nullable=True)
     integration_id: so.Mapped[str] = so.mapped_column(sa.String(128), nullable=False)
     ssn: so.Mapped[Optional[str]] = so.mapped_column(sa.String(128), nullable=True)
+
+    __table_args__ = (
+        sa.UniqueConstraint('firm_id', 'integration_id', 
+                           name='uq_firm_integration'),
+    )
