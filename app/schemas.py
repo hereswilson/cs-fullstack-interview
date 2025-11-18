@@ -1,5 +1,5 @@
 from app import ma
-from app.models import Client
+from app.models import Client, User 
 from marshmallow import fields, validates, ValidationError, validate
 
 class ClientSchema(ma.SQLAlchemyAutoSchema):
