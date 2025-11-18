@@ -1,8 +1,10 @@
 from app.clients import bp
 from app import db
 from app.models import Client, Firm
+from app.services import ClientService
 from flask import jsonify, request
 from app.schemas import ClientSchema, ClientImportSchema
+from marshmallow import ValidationError
 
 
 client_schema = ClientSchema()

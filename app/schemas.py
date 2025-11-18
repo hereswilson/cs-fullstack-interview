@@ -39,13 +39,6 @@ class FieldNamesSchema(ma.Schema):
         allow_none=True,
         validate=validate.Length(max=128)
     )
-    
-    @validates("phone_numbers")
-    def validate_phone_numbers(self, value):
-        if value and not isinstance(value, list):
-            raise ValidationError("phone_numbers must be a list")
-        if value and any(not isinstance(num, str) for num in value):
-            raise ValidationError("All phone numbers must be strings")
 
 class ClientImportSchema(ma.Schema):
     firm_id = fields.Integer(required=True)
