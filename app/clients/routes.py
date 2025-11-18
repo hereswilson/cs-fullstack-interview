@@ -2,7 +2,7 @@ from app.clients import bp
 from app import db
 from app.models import Client, Firm
 from flask import jsonify, request
-from app.schemas import ClientSchema
+from app.schemas import ClientSchema, ClientImportSchema
 
 
 client_schema = ClientSchema()
@@ -22,14 +22,18 @@ def patch_client():
         data = request.get_json()
 
         firm = Firm(data.get("firm_id", 1))
-         # Validate payload structure and content
-        is_valid, errors = validate_patch_payload(data)
-        if not is_valid:
-            return jsonify({"status": "error", "errors": errors}), 400
+        schema = ClientImportSchema()
+        errors = schema.validate(data)
+        if errors:
+            formatted_errors = [{"field": k, "message": str(v)} for k, v in errors.items()]
+            return jsonify({"status": "error", "errors": formatted_errors}), 400
 
-        # Simplified upsert for CSV_IMPORT
-        result = upsert_client_simple(
-            firm_id=data["firm_id"],
+        firm = Firm(data.get("firm_id", 1))
+        service = ClientService()
+
+        # 3. Call the actual handler
+        result = service.import_client_handler(
+            firm=firm,
             field_names=data["field_names"]
         )
 
