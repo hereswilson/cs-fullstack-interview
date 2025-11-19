@@ -1,0 +1,8 @@
+I implemented a layered architecture for the backend, introducing strict input validation using Marshmallow schemas in app/schemas.py to enforce data constraints. This ensures that the ClientService receives only sanitized data, preventing invalid states from reaching the database logic in import_client_handler. I refactored and changed some of the logic for the handler to only match on a combined firm and integration_id. I could add back in the logic for the other matches if neccessary.
+
+On the frontend, I utilized a custom hook, useClients, to encapsulate state management and API interactions. This separates the business logic from the UI components like ClientManager and ClientTable, resulting in a cleaner component structure where the view layer is purely responsible for presentation and user events.
+
+Trade-offs & Assumptions:
+On the backend: Some of what I did is slightly overkill, but will allow for more extensibility as the API develops or needs to be changed.
+
+On the frontend :To provide a smooth user experience, I implemented optimistic UI updates where the local state is updated immediately with a temporary negative ID (e.g., -Date.now()) while the backend processes the request. The primary trade-off is the risk of temporary state inconsistency if the API call fails, which I mitigated by capturing the previous state and restoring it in the event of an error. I also prioritized simplicity by implementing a manual "Refresh" button rather than introducing the complexity of polling or WebSockets for real-time updates.
