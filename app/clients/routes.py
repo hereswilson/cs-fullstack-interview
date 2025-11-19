@@ -5,6 +5,7 @@ from app.services import ClientService
 from flask import jsonify, request
 from app.schemas import ClientSchema, ClientImportSchema
 from marshmallow import ValidationError
+from app.utils import flatten_marshmallow_errors
 
 
 client_schema = ClientSchema()
@@ -45,11 +46,7 @@ def patch_client():
         }), 200
 
     except ValidationError as err:
-        formatted_errors = []
-        for field, messages in err.messages.items():
-            for msg in messages:
-                formatted_errors.append({"field": field, "message": msg})
-        
+        formatted_errors = flatten_marshmallow_errors(err.messages)
         return jsonify({"status": "error", "errors": formatted_errors}), 400
     
     except Exception as e:
